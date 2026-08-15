@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UserModel",
+  "type": "object",
+  "description": "A structured, user-editable representation of what an AI should know about the user.",
+  "properties": {
+    "communication_style": {
+      "type": "string",
+      "enum": ["concise", "detailed", "socratic", "casual", "formal"]
+    },
+    "tone": {
+      "type": "string",
+      "enum": ["direct", "gentle", "enthusiastic", "neutral"]
+    },
+    "expertise": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Domains the user has knowledge in"
+    },
+    "preferences": {
+      "type": "object",
+      "properties": {
+        "explanations": {
+          "type": "string",
+          "enum": ["show-work", "just-answer", "analogies"]
+        },
+        "uncertainty": {
+          "type": "string",
+          "enum": ["admit", "guess", "refuse"],
+          "description": "How the AI should behave when uncertain"
+        }
+      }
+    },
+    "corrections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date" },
+          "context": { "type": "string" },
+          "from": { "type": "string", "description": "What the AI incorrectly believed" },
+          "to": { "type": "string", "description": "The corrected understanding" }
+        }
+      }
+    }
+  }
+}

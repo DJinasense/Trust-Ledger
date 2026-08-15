@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TrustLedgerEntry",
+  "type": "object",
+  "required": ["id", "timestamp", "model", "context", "response", "trust_rating"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "model": { "type": "string", "description": "Name/identifier of the AI model used" },
+    "context": { 
+      "type": "string",
+      "enum": ["general", "code", "advice", "creative", "personal-memory", "facts"],
+      "description": "Domain of the interaction"
+    },
+    "prompt": { "type": "string", "description": "User's input (optional)" },
+    "response": { "type": "string", "description": "AI's response" },
+    "claimed_confidence": {
+      "type": "string",
+      "enum": ["uncertain", "moderate", "confident", "absolute"],
+      "description": "How confident the AI appeared"
+    },
+    "was_correct": {
+      "type": ["string", "null"],
+      "enum": ["true", "false", "partial", "unknown", null],
+      "description": "User's assessment of correctness"
+    },
+    "correction": { "type": ["string", "null"], "description": "User's correction if AI was wrong" },
+    "trust_rating": { 
+      "type": "integer", 
+      "minimum": 1, 
+      "maximum": 5,
+      "description": "User's trust level for this specific interaction"
+    },
+    "tags": { 
+      "type": "array", 
+      "items": { "type": "string" },
+      "description": "User-defined tags for categorization"
+    }
+  }
+}
