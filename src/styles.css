@@ -438,3 +438,40 @@ footer {
     .correctness { flex-direction: column; }
     .correct-btn { width: 100%; }
 }
+/* Chrome Extension Tray Constraints */
+body {
+  width: 400px;
+  height: 500px;
+  margin: 0;
+  padding: 12px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #fafafa;
+}
+
+/* Container limits for structured JSON panels */
+#app, main, .container {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Ensure forms, schemas, and fields scale down nicely */
+textarea, pre, code, input {
+  max-width: 100%;
+  box-sizing: border-box;
+  font-size: 13px !important;
+}
+
+/* Compact ledger scroll area */
+.ledger-entries {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px;
+}
