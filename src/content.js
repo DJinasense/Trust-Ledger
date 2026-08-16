@@ -53,3 +53,5 @@ const observer = new MutationObserver(() => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+
