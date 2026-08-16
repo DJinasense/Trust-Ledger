@@ -1,15 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <title>Trust Ledger Matrix</title>
+  <title>Trust Ledger Matrix Pro</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="app">
     <header>
-      <h1>Trust-Ledger Matrix</h1>
-      <p id="stats-banner">Loading neural connections...</p>
+      <div class="header-main">
+        <h1>Trust-Ledger Matrix</h1>
+        <button id="theme-toggle-btn" class="icon-btn" aria-label="Toggle Theme">🌓</button>
+      </div>
+      <p id="stats-banner">Connecting cognitive architecture...</p>
+      
+      <!-- Live Matrix Spatial Filter Bar -->
+      <div class="search-container">
+        <input type="text" id="matrix-search" placeholder="Type to search synapse prompts or tags... (Ctrl+F)">
+        <span id="search-count" class="hidden">0 found</span>
+      </div>
     </header>
 
     <!-- The 3D Spatial Canvas Workspace -->
