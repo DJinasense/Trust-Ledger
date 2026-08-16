@@ -53,5 +53,10 @@ const observer = new MutationObserver(() => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
-if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+const safeTrim = (el) => el ? el.innerText.trim() : "";
 
+// Usage example inside your ChatGPT condition block:
+if (userTurns.length && assistantTurns.length) {
+  promptText = safeTrim(userTurns[userTurns.length - 1]);
+  responseText = safeTrim(assistantTurns[assistantTurns.length - 1]);
+}
