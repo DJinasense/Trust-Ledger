@@ -1,191 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trust Ledger</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Trust Ledger Matrix</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="app">
     <header>
-        <h1>Trust Ledger</h1>
-        <p class="subtitle">An accountable record of what your AI gets right — and wrong.</p>
+      <h1>Trust-Ledger Matrix</h1>
+      <p id="stats-banner">Loading neural connections...</p>
     </header>
 
-    <nav class="tabs">
-        <button class="tab-btn active" data-tab="ledger">Ledger</button>
-        <button class="tab-btn" data-tab="model">Model of You</button>
-        <button class="tab-btn" data-tab="trust">Trust Scores</button>
-    </nav>
+    <!-- The 3D Spatial Canvas Workspace -->
+    <div id="canvas-container">
+      <canvas id="matrix-canvas"></canvas>
+    </div>
 
-    <!-- TAB: LEDGER -->
-    <section id="ledger" class="tab-content active">
-        <div class="entry-form">
-            <h2>Log an Interaction</h2>
-            <div class="form-row">
-                <label>AI Model</label>
-                <input type="text" id="model" placeholder="e.g., GPT-4, Claude, Copilot">
-            </div>
-            <div class="form-row">
-                <label>Context</label>
-                <select id="context">
-                    <option value="general">General</option>
-                    <option value="code">Code / Technical</option>
-                    <option value="advice">Advice / Recommendations</option>
-                    <option value="creative">Creative</option>
-                    <option value="personal-memory">Personal Memory</option>
-                    <option value="facts">Facts / Research</option>
-                </select>
-            </div>
-            <div class="form-row">
-                <label>What you asked (optional)</label>
-                <textarea id="prompt" rows="2" placeholder="Brief prompt..."></textarea>
-            </div>
-            <div class="form-row">
-                <label>AI's Response</label>
-                <textarea id="response" rows="3" placeholder="What did it say?"></textarea>
-            </div>
-            <div class="form-row">
-                <label>How confident did it <em>sound</em>?</label>
-                <select id="claimed-confidence">
-                    <option value="uncertain">Hesitant / Uncertain</option>
-                    <option value="moderate" selected>Moderate</option>
-                    <option value="confident">Very Confident</option>
-                    <option value="absolute">Absolute / No caveats</option>
-                </select>
-            </div>
-            <div class="form-row">
-                <label>Was it correct?</label>
-                <div class="correctness">
-                    <button type="button" class="correct-btn" data-val="true">✓ Correct</button>
-                    <button type="button" class="correct-btn" data-val="false">✗ Wrong</button>
-                    <button type="button" class="correct-btn" data-val="partial">~ Partial</button>
-                    <button type="button" class="correct-btn" data-val="unknown">? Unsure</button>
-                </div>
-                <input type="hidden" id="was-correct" value="">
-            </div>
-            <div class="form-row" id="correction-row" style="display:none;">
-                <label>Your correction</label>
-                <textarea id="correction" rows="2" placeholder="What should it have said?"></textarea>
-            </div>
-            <div class="form-row">
-                <label>Your trust level (1-5)</label>
-                <div class="trust-slider">
-                    <input type="range" id="trust-rating" min="1" max="5" value="3">
-                    <span id="trust-label">Neutral</span>
-                </div>
-            </div>
-            <div class="form-row">
-                <label>Tags (comma separated)</label>
-                <input type="text" id="tags" placeholder="python, career, health">
-            </div>
-            <button id="add-entry" class="primary">Add to Ledger</button>
-        </div>
-
-        <div class="entries-list">
-            <h2>Recent Entries <span id="entry-count">(0)</span></h2>
-            <div id="entries"></div>
-        </div>
-    </section>
-
-    <!-- TAB: MODEL OF YOU -->
-    <section id="model" class="tab-content">
-        <div class="model-header">
-            <h2>Your Model</h2>
-            <p>This is what the AI should know about you. Edit it directly. Export it. Hand it to any AI you use.</p>
-            <button id="export-model" class="secondary">Export JSON</button>
-            <button id="import-model-btn" class="secondary">Import JSON</button>
-            <input type="file" id="import-model" accept=".json" style="display:none">
-        </div>
-
-        <div class="model-editor">
-            <div class="model-section">
-                <h3>Communication Style</h3>
-                <div class="editable-field">
-                    <label>Preferred style</label>
-                    <select id="comm-style">
-                        <option value="concise">Concise</option>
-                        <option value="detailed">Detailed</option>
-                        <option value="socratic">Socratic / Questioning</option>
-                        <option value="casual">Casual</option>
-                        <option value="formal">Formal</option>
-                    </select>
-                </div>
-                <div class="editable-field">
-                    <label>Tone preference</label>
-                    <select id="tone">
-                        <option value="direct">Direct</option>
-                        <option value="gentle">Gentle</option>
-                        <option value="enthusiastic">Enthusiastic</option>
-                        <option value="neutral">Neutral</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="model-section">
-                <h3>Expertise & Knowledge</h3>
-                <div class="tag-input" id="expertise-tags">
-                    <input type="text" id="expertise-input" placeholder="Add expertise + Enter">
-                    <div class="tags-container" id="expertise-container"></div>
-                </div>
-            </div>
-
-            <div class="model-section">
-                <h3>Preferences</h3>
-                <div class="editable-field">
-                    <label>Explanations</label>
-                    <select id="explanations">
-                        <option value="show-work">Show your work</option>
-                        <option value="just-answer">Just give me the answer</option>
-                        <option value="analogies">Use analogies</option>
-                    </select>
-                </div>
-                <div class="editable-field">
-                    <label>When uncertain, the AI should:</label>
-                    <select id="uncertainty">
-                        <option value="admit">Admit it and ask</option>
-                        <option value="guess">Make best guess + flag</option>
-                        <option value="refuse">Refuse to answer</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="model-section">
-                <h3>Corrections History</h3>
-                <div id="corrections-list">
-                    <p class="empty">No corrections yet. They appear here when you log them in the Ledger.</p>
-                </div>
-            </div>
-
-            <div class="model-section">
-                <h3>Raw JSON</h3>
-                <textarea id="model-raw" rows="10"></textarea>
-                <button id="save-model" class="primary">Save Changes</button>
-            </div>
-        </div>
-    </section>
-
-    <!-- TAB: TRUST SCORES -->
-    <section id="trust" class="tab-content">
-        <h2>Trust Scores</h2>
-        <p class="explain">Trust isn't one number. It's per-context, per-model, earned over time.</p>
-
-        <div class="trust-grid" id="trust-grid">
-            <!-- Populated by JS -->
-        </div>
-
-        <div class="trust-timeline">
-            <h3>Trust Over Time</h3>
-            <div id="timeline-chart">
-                <p class="empty">Add ledger entries to see your trust timeline.</p>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <p>Trust Ledger — Open Source. Built in collaboration. Your data stays local until you say otherwise.</p>
-    </footer>
-
-    <script src="app.js"></script>
+    <!-- Contextual Inspection Panel -->
+    <div id="inspection-panel" class="hidden">
+      <div class="panel-header">
+        <span id="panel-model-badge">MODEL</span>
+        <button id="close-panel-btn">×</button>
+      </div>
+      <div class="panel-scroll">
+        <p class="panel-label">Prompt:</p>
+        <blockquote id="panel-prompt">Select an interaction synapse to audit...</blockquote>
+        <p class="panel-label">Response:</p>
+        <blockquote id="panel-response">...</blockquote>
+      </div>
+      <div id="audit-actions" class="hidden">
+        <button id="btn-correct" class="action-btn core-green">Harden Trust (👍)</button>
+        <button id="btn-hallucinated" class="action-btn core-red">Flag Lie (👎)</button>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
 </body>
 </html>
