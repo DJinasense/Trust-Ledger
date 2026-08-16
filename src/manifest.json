@@ -1,27 +1,28 @@
 {
   "manifest_version": 3,
   "name": "Trust Ledger Client",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "An open-source protocol for accountable human-AI relationships.",
   "permissions": [
     "storage",
     "activeTab"
   ],
   "host_permissions": [
-    "https://chatgpt.com*",
-    "https://claude.ai*",
-    "https://moonshot.cn*"
+    "https://*://*",
+    "https://*.claude.ai/*",
+    "https://*.moonshot.cn/*"
   ],
   "action": {
-    "default_popup": "index.html",
-    "default_icon": "icon.png"
+    "default_popup": "index.html"
   },
   "content_scripts": [
     {
       "matches": [
         "https://chatgpt.com*",
+        "https://*://*",
         "https://claude.ai*",
-        "https://moonshot.cn*"
+        "https://*.claude.ai/*",
+        "https://*.moonshot.cn/*"
       ],
       "js": ["content.js"]
     }
