@@ -434,5 +434,7 @@ function renderTrustScores() {
                 <br>Last \${recent.length} entries (oldest → newest)
             </div>
         </div>
+
+                if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
     `;
 }
