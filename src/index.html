@@ -2,47 +2,107 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <title>Trust Ledger Matrix Pro</title>
+  <title>Trust Ledger Client</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="app">
     <header>
-      <div class="header-main">
-        <h1>Trust-Ledger Matrix</h1>
-        <button id="theme-toggle-btn" class="icon-btn" aria-label="Toggle Theme">🌓</button>
-      </div>
-      <p id="stats-banner">Connecting cognitive architecture...</p>
+      <h1>Trust Ledger</h1>
+      <p>An accountable record of what your AI gets right — and wrong.</p>
       
-      <!-- Live Matrix Spatial Filter Bar -->
-      <div class="search-container">
-        <input type="text" id="matrix-search" placeholder="Type to search synapse prompts or tags... (Ctrl+F)">
-        <span id="search-count" class="hidden">0 found</span>
-      </div>
+      <!-- Tab Navigation Header Control Matrix -->
+      <nav class="tab-nav">
+        <button class="nav-btn active" data-target="panel-ledger">Ledger</button>
+        <button class="nav-btn" data-target="panel-model-of-you">Model of You</button>
+        <button class="nav-btn" data-target="panel-trust-scores">Trust Scores</button>
+      </nav>
     </header>
 
-    <!-- The 3D Spatial Canvas Workspace -->
-    <div id="canvas-container">
-      <canvas id="matrix-canvas"></canvas>
-    </div>
+    <main class="content-viewport">
+      
+      <!-- VIEW 1: THE LEDGER FORM ENGINE -->
+      <section id="panel-ledger" class="tab-panel">
+        <div class="card form-card">
+          <h2>Log an Interaction</h2>
+          <form id="ledger-form">
+            <div class="input-group">
+              <label for="form-model">AI MODEL</label>
+              <input type="text" id="form-model" placeholder="e.g., ChatGPT, Claude, Kimi" required>
+            </div>
+            
+            <div class="input-group">
+              <label for="form-context">CONTEXT</label>
+              <select id="form-context">
+                <option value="General">General</option>
+                <option value="Coding">Coding</option>
+                <option value="Research">Research</option>
+                <option value="Creative">Creative</option>
+              </select>
+            </div>
 
-    <!-- Contextual Inspection Panel -->
-    <div id="inspection-panel" class="hidden">
-      <div class="panel-header">
-        <span id="panel-model-badge">MODEL</span>
-        <button id="close-panel-btn">×</button>
-      </div>
-      <div class="panel-scroll">
-        <p class="panel-label">Prompt:</p>
-        <blockquote id="panel-prompt">Select an interaction synapse to audit...</blockquote>
-        <p class="panel-label">Response:</p>
-        <blockquote id="panel-response">...</blockquote>
-      </div>
-      <div id="audit-actions" class="hidden">
-        <button id="btn-correct" class="action-btn core-green">Harden Trust (👍)</button>
-        <button id="btn-hallucinated" class="action-btn core-red">Flag Lie (👎)</button>
-      </div>
-    </div>
+            <div class="input-group">
+              <label for="form-prompt">WHAT YOU ASKED (OPTIONAL)</label>
+              <textarea id="form-prompt" rows="2" placeholder="Brief prompt..."></textarea>
+            </div>
+
+            <div class="input-group">
+              <label for="form-response">AI'S RESPONSE</label>
+              <textarea id="form-response" rows="3" placeholder="Paste response here..." required></textarea>
+            </div>
+
+            <div class="audit-radio-group">
+              <label class="radio-label">INITIAL AUDIT STATE:</label>
+              <div class="radios">
+                <label class="pill-radio tool-green">
+                  <input type="radio" name="form-audit" value="true" checked> Accurate (👍)
+                </label>
+                <label class="pill-radio tool-red">
+                  <input type="radio" name="form-audit" value="false"> Hallucinated (👎)
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Commit to Trust Ledger</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- VIEW 2: MODEL OF YOU DASHBOARD -->
+      <section id="panel-model-of-you" class="tab-panel hidden">
+        <div class="card metric-card">
+          <h2>Your Cognitive Topology</h2>
+          <p class="subtitle">Where your brain is augmenting its tasks</p>
+          
+          <div class="cognitive-chart-box">
+            <!-- Dynamic Category Breakdown Bars -->
+            <div class="chart-row"><span class="lbl">Coding</span><div class="bar-bg"><div id="bar-coding" class="bar-fill cyan" style="width: 0%"></div></div><span id="txt-coding" class="val">0%</span></div>
+            <div class="chart-row"><span class="lbl">Research</span><div class="bar-bg"><div id="bar-research" class="bar-fill blue" style="width: 0%"></div></div><span id="txt-research" class="val">0%</span></div>
+            <div class="chart-row"><span class="lbl">Creative</span><div class="bar-bg"><div id="bar-creative" class="bar-fill purple" style="width: 0%"></div></div><span id="txt-creative" class="val">0%</span></div>
+            <div class="chart-row"><span class="lbl">General</span><div class="bar-bg"><div id="bar-general" class="bar-fill grey" style="width: 0%"></div></div><span id="txt-general" class="val">0%</span></div>
+          </div>
+
+          <div class="user-profile-summary">
+            <h3>Sovereign Insight</h3>
+            <p id="profile-insight">Log more entries to map your cognitive fingerprints.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: TRUST SCORES TAB -->
+      <section id="panel-trust-scores" class="tab-panel hidden">
+        <div class="card score-card">
+          <h2>Model Performance Standings</h2>
+          <p class="subtitle">Empirical validation scorecard based on hard audits</p>
+          
+          <div id="scores-container" class="scores-list">
+            <!-- Dynamic Model Scorecards generate here -->
+            <div class="empty-state">No model metrics captured yet. Track your first logs above!</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
   </div>
   <script src="app.js"></script>
 </body>
