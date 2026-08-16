@@ -1,149 +1,194 @@
-/* Deep Space Interactive Styles */
-body {
-  width: 400px;
-  height: 500px;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background-color: #0a0a0f;
-  color: #f0f0f5;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+/**
+ * Trust Ledger - 3D Spatial Network Canvas Visualizer Engine
+ */
+
+const StorageSync = {
+  async loadLedger() {
+    return new Promise((resolve) => {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.get(['trust_ledger'], (result) => resolve(result.trust_ledger || []));
+      } else {
+        const localData = localStorage.getItem('trust_ledger');
+        resolve(localData ? JSON.parse(localData) : []);
+      }
+    });
+  },
+  async saveLedger(ledgerArray) {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      await chrome.storage.local.set({ trust_ledger: ledgerArray });
+    }
+    localStorage.setItem('trust_ledger', JSON.stringify(ledgerArray));
+  }
+};
+
+let ledgerData = [];
+let activeNode = null;
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+
+// Simulation Space Coordinates
+let width = canvas.width = 400;
+let height = canvas.height = 250;
+let rotationAngle = 0;
+
+// Model Anchors mapping "The Model Brain Clusters"
+const modelClusters = {
+  'chatgpt': { x: 100, y: 120, z: 0, color: '#10a37f', label: 'ChatGPT' },
+  'claude': { x: 300, y: 120, z: 50, color: '#d97706', label: 'Claude' },
+  'kimi': { x: 200, y: 80, z: -50, color: '#2563eb', label: 'Kimi' },
+  'manual-entry': { x: 200, y: 180, z: 0, color: '#7c3aed', label: 'Local' }
+};
+
+// Generates pseudorandom 3D offset structures for the data stream nodes
+function mapLedgerToNodes(ledger) {
+  return ledger.map((entry, idx) => {
+    const parent = modelClusters[entry.model] || modelClusters['manual-entry'];
+    // Use index hashing so nodes stay anchored consistently over space
+    const offsetAngle = (idx * 135) * (Math.PI / 180);
+    const radius = 40 + (idx * 4) % 60;
+    
+    return {
+      id: entry.id,
+      entry: entry,
+      // Calculate basic 3D projection positions relative to parent cluster
+      baseX: parent.x + Math.cos(offsetAngle) * radius,
+      baseY: parent.y + Math.sin(offsetAngle) * radius,
+      baseZ: (idx * 25) % 100 - 50,
+      x: 0, y: 0, // Projected screen spaces
+      radius: 5,
+      color: entry.was_correct === true ? '#10b981' : (entry.was_correct === false ? '#ef4444' : '#38bdf8')
+    };
+  });
 }
 
-#app {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
+// 3D Matrix Rendering Loop Transformation pipeline
+function renderMatrixSpace() {
+  ctx.clearRect(0, 0, width, height);
+  rotationAngle += 0.003; // Auto slow cosmic spin
+
+  const nodes = mapLedgerToNodes(ledgerData);
+
+  // Draw cluster backdrops & connections
+  Object.keys(modelClusters).forEach(key => {
+    const cluster = modelClusters[key];
+    ctx.beginPath();
+    ctx.arc(cluster.x, cluster.y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = cluster.color + '33';
+    ctx.fill();
+    ctx.strokeStyle = cluster.color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // Project, calculate tracking linkages, and draw item connections
+  nodes.forEach(node => {
+    // Basic rotational projection formula 
+    const cosR = Math.cos(rotationAngle);
+    const sinR = Math.sin(rotationAngle);
+    
+    const rotatedX = (node.baseX - 200) * cosR - (node.baseZ) * sinR + 200;
+    const rotatedZ = (node.baseX - 200) * sinR + (node.baseZ) * cosR;
+    
+    node.x = rotatedX;
+    node.y = node.baseY; // Stabilize altitude vector
+
+    const parent = modelClusters[node.entry.model] || modelClusters['manual-entry'];
+    
+    // Draw interaction synapse connection lines
+    ctx.beginPath();
+    ctx.moveTo(parent.x, parent.y);
+    ctx.lineTo(node.x, node.y);
+    ctx.strokeStyle = node.color + '22';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Render node sphere point 
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+    ctx.fillStyle = node.color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = node.color;
+    ctx.fill();
+    ctx.shadowBlur = 0; // Reset canvas filter engine
+  });
+
+  requestAnimationFrame(renderMatrixSpace);
 }
 
-header {
-  padding: 10px 14px;
-  background: linear-gradient(180deg, #12121a 0%, #0a0a0f 100%);
-  border-bottom: 1px solid #1f1f2e;
+// Interactive Action Click Handler Hooks
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const clickY = e.clientY - rect.top;
+
+  const nodes = mapLedgerToNodes(ledgerData);
+  let clickedNode = null;
+
+  // Collision metric matching
+  nodes.forEach(node => {
+    const dist = Math.hypot(node.x - clickX, node.y - clickY);
+    if (dist < node.radius + 4) clickedNode = node;
+  });
+
+  if (clickedNode) {
+    activeNode = clickedNode;
+    showInspectionPanel(clickedNode.entry);
+  }
+});
+
+function showInspectionPanel(entry) {
+  document.getElementById('panel-model-badge').innerText = entry.model;
+  document.getElementById('panel-model-badge').style.background = (modelClusters[entry.model] || modelClusters['manual-entry']).color;
+  document.getElementById('panel-prompt').innerText = entry.prompt;
+  document.getElementById('panel-response').innerText = entry.response;
+  
+  document.getElementById('inspection-panel').classList.remove('hidden');
+  document.getElementById('audit-actions').classList.remove('hidden');
 }
 
-header h1 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  background: linear-gradient(45deg, #4f46e5, #06b6d4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+document.getElementById('close-panel-btn').addEventListener('click', () => {
+  document.getElementById('inspection-panel').classList.add('hidden');
+});
+
+// Update live data engine weights
+async function auditInteraction(isCorrect) {
+  if (!activeNode) return;
+  
+  ledgerData = ledgerData.map(entry => {
+    if (entry.id === activeNode.id) {
+      return { ...entry, was_correct: isCorrect, claimed_confidence: "reviewed" };
+    }
+    return entry;
+  });
+
+  await StorageSync.saveLedger(ledgerData);
+  updateStatsBanner();
+  document.getElementById('inspection-panel').classList.add('hidden');
 }
 
-header p {
-  margin: 2px 0 0 0;
-  font-size: 11px;
-  color: #71717a;
+document.getElementById('btn-correct').addEventListener('click', () => auditInteraction(true));
+document.getElementById('btn-hallucinated').addEventListener('click', () => auditInteraction(false));
+
+function updateStatsBanner() {
+  const verified = ledgerData.filter(e => e.was_correct !== null).length;
+  const accuracy = ledgerData.filter(e => e.was_correct === true).length;
+  document.getElementById('stats-banner').innerText = `${ledgerData.length} Interactions Intercepted • ${verified} Audited • Accuracy: ${verified ? Math.round((accuracy/verified)*100) : 0}%`;
 }
 
-#canvas-container {
-  flex: 1;
-  position: relative;
-  cursor: grab;
+// Background storage synchronization runtime hook
+if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === "NEW_AI_INTERACTION") {
+      StorageSync.loadLedger().then(data => {
+        ledgerData = data;
+        updateStatsBanner();
+      });
+    }
+  });
 }
 
-#canvas-container:active {
-  cursor: grabbing;
-}
-
-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* Inspection Overlay Panel */
-#inspection-panel {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 220px;
-  background: rgba(14, 14, 23, 0.95);
-  backdrop-filter: blur(8px);
-  border-top: 1px solid #1f1f2e;
-  padding: 12px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 10;
-}
-
-#inspection-panel.hidden {
-  transform: translateY(100%);
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-#panel-model-badge {
-  font-size: 10px;
-  text-transform: uppercase;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #1f1f2e;
-  letter-spacing: 0.5px;
-}
-
-#close-panel-btn {
-  background: none;
-  border: none;
-  color: #a1a1aa;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.panel-scroll {
-  flex: 1;
-  overflow-y: auto;
-  margin-bottom: 8px;
-}
-
-.panel-label {
-  font-size: 10px;
-  color: #a1a1aa;
-  margin: 4px 0;
-  text-transform: uppercase;
-}
-
-blockquote {
-  margin: 0 0 8px 0;
-  font-size: 12px;
-  background: rgba(255,255,255,0.03);
-  padding: 6px;
-  border-radius: 4px;
-  border-left: 2px solid #4f46e5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-#audit-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  flex: 1;
-  border: none;
-  padding: 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.action-btn:hover { opacity: 0.9; }
-.core-green { background: #10b981; }
-.core-red { background: #ef4444; }
+document.addEventListener("DOMContentLoaded", async () => {
+  ledgerData = await StorageSync.loadLedger();
+  updateStatsBanner();
+  renderMatrixSpace();
+});
