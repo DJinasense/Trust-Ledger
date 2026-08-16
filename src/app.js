@@ -1,5 +1,5 @@
 /**
- * Trust Ledger Matrix Pro - 3D Core Canvas Visualization Engine
+ * Trust Ledger Management - Core Integration Routing Engine
  */
 
 const StorageSync = {
@@ -21,254 +21,157 @@ const StorageSync = {
   }
 };
 
-let ledgerData = [];
-let activeNode = null;
-let searchQuery = "";
-const canvas = document.getElementById('matrix-canvas');
-const ctx = canvas.getContext('2d');
+let globalLedger = [];
 
-let width = canvas.width = 400;
-let height = canvas.height = 260;
-let rotationAngle = 0;
+// --- VIEW NAVIGATION CONTROLLER ---
+const tabButtons = document.querySelectorAll('.nav-btn');
+const tabPanels = document.querySelectorAll('.tab-panel');
 
-// Model Target Cluster Anchor Coordinates
-const modelClusters = {
-  'chatgpt': { x: 100, y: 130, z: 0, color: '#10a37f', label: 'ChatGPT' },
-  'claude': { x: 300, y: 130, z: 40, color: '#d97706', label: 'Claude' },
-  'kimi': { x: 200, y: 80, z: -40, color: '#2563eb', label: 'Kimi' },
-  'manual-entry': { x: 200, y: 190, z: 0, color: '#7c3aed', label: 'Local' }
-};
+tabButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    // Deactivate all targets
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabPanels.forEach(panel => panel.classList.add('hidden'));
 
-// Map items to distinct 3D projection positions
-function mapLedgerToNodes(ledger) {
-  return ledger.map((entry, idx) => {
-    const parent = modelClusters[entry.model] || modelClusters['manual-entry'];
-    const offsetAngle = (idx * 135) * (Math.PI / 180);
-    const radius = 35 + (idx * 3) % 45;
+    // Activate selected target frame
+    button.classList.add('active');
+    const targetId = button.getAttribute('data-target');
+    document.getElementById(targetId).classList.remove('hidden');
+
+    // Run custom updates if switching to complex data panels
+    if (targetId === 'panel-model-of-you') updateModelOfYouTab();
+    if (targetId === 'panel-trust-scores') updateTrustScoresTab();
+  });
+});
+
+// --- CORE ANALYTICAL UPDATE ENGINES ---
+
+function updateModelOfYouTab() {
+  if (globalLedger.length === 0) return;
+
+  const total = globalLedger.length;
+  const counts = { General: 0, Coding: 0, Research: 0, Creative: 0 };
+
+  // Aggregate ratios
+  globalLedger.forEach(entry => {
+    const ctx = entry.context || 'General';
+    if (counts[ctx] !== undefined) counts[ctx]++;
+  });
+
+  // Calculate percentages and update DOM view bars
+  Object.keys(counts).forEach(key => {
+    const pct = Math.round((counts[key] / total) * 100);
+    const lowKey = key.toLowerCase();
     
-    // Check if item matches the active search filter query string
-    const matchStr = `${entry.prompt} ${entry.response} ${entry.model}`.toLowerCase();
-    const isMatched = searchQuery === "" || matchStr.includes(searchQuery);
+    const bar = document.getElementById(`bar-${lowKey}`);
+    const txt = document.getElementById(`txt-${lowKey}`);
+    
+    if (bar && txt) {
+      bar.style.width = `${pct}%`;
+      txt.innerText = `${pct}%`;
+    }
+  });
 
-    return {
-      id: entry.id,
-      entry: entry,
-      baseX: parent.x + Math.cos(offsetAngle) * radius,
-      baseY: parent.y + Math.sin(offsetAngle) * radius,
-      baseZ: (idx * 20) % 80 - 40,
-      x: 0, y: 0,
-      radius: isMatched ? 6 : 2.5,
-      isMatched: isMatched,
-      color: entry.was_correct === true ? '#10b981' : (entry.was_correct === false ? '#ef4444' : '#38bdf8')
+  // Generate dynamic contextual insight summary string
+  const sortedContexts = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+  const primaryFocus = sortedContexts[0];
+  
+  document.getElementById('profile-insight').innerText = 
+    `Your primary cognitive dependency is currently centered on [${primaryFocus}] tasks, representing ${Math.round((counts[primaryFocus]/total)*100)}% of your externalized intellect loops.`;
+}
+
+function updateTrustScoresTab() {
+  const container = document.getElementById('scores-container');
+  if (!container) return;
+
+  if (globalLedger.length === 0) {
+    container.innerHTML = '<div class="empty-state">No model metrics captured yet. Track your first logs above!</div>';
+    return;
+  }
+
+  // Parse models performance weights
+  const modelStats = {};
+  globalLedger.forEach(entry => {
+    const model = (entry.model || 'unknown').toLowerCase().trim();
+    if (!modelStats[model]) {
+      modelStats[model] = { total: 0, correct: 0 };
+    }
+    modelStats[model].total++;
+    if (entry.was_correct === true) modelStats[model].correct++;
+  });
+
+  // Construct clean dynamic list layout cards
+  let htmlOutput = '';
+  Object.keys(modelStats).forEach(model => {
+    const stats = modelStats[model];
+    const acc = Math.round((stats.correct / stats.total) * 100);
+    const isLow = acc < 70;
+
+    htmlOutput += `
+      <div class="score-row">
+        <div>
+          <div class="score-model-name">${model}</div>
+          <div class="score-stats">${stats.correct}/${stats.total} entries verified</div>
+        </div>
+        <div class="score-badge ${isLow ? 'low' : ''}">${acc}% Accurate</div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = htmlOutput;
+}
+
+// --- FORM INTERACTION LOG ENTRY SUBMISSION GATEWAY ---
+const formElement = document.getElementById('ledger-form');
+if (formElement) {
+  formElement.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    // Extract inputs safely
+    const modelVal = document.getElementById('form-model').value;
+    const contextVal = document.getElementById('form-context').value;
+    const promptVal = document.getElementById('form-prompt').value;
+    const responseVal = document.getElementById('form-response').value;
+    const auditVal = document.querySelector('input[name="form-audit"]:checked').value === 'true';
+
+    // Generate record object payload
+    const record = {
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2),
+      timestamp: new Date().toISOString(),
+      model: modelVal,
+      context: contextVal,
+      prompt: promptVal,
+      response: responseVal,
+      was_correct: auditVal,
+      tags: ["manual-form-entry"]
     };
+
+    // Load ledger, append to top, save array state back to storage
+    globalLedger = await StorageSync.loadLedger();
+    globalLedger.unshift(record);
+    await StorageSync.saveLedger(globalLedger);
+
+    // Reset input form visual text blocks cleanly
+    formElement.reset();
+    alert("Interaction successfully committed to sovereign ledger!");
   });
 }
 
-// Main 3D Rendering Animation Pipeline Loop
-function renderMatrixSpace() {
-  ctx.clearRect(0, 0, width, height);
-  
-  // Theme Color Configurations
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  const gridColor = isLight ? 'rgba(15, 23, 42, 0.03)' : 'rgba(99, 102, 241, 0.04)';
-  const labelColor = isLight ? '#475569' : '#94a3b8';
-
-  // Draw Structural Background Drafting Grid
-  ctx.strokeStyle = gridColor;
-  ctx.lineWidth = 1;
-  for(let i=0; i<width; i+=20) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke(); }
-  for(let j=0; j<height; j+=20) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(width, j); ctx.stroke(); }
-
-  rotationAngle += 0.0025; // Continuous spatial drift rotation speed
-  const nodes = mapLedgerToNodes(ledgerData);
-
-  // Render Core AI Cluster Centers
-  Object.keys(modelClusters).forEach(key => {
-    const cluster = modelClusters[key];
-    ctx.beginPath();
-    ctx.arc(cluster.x, cluster.y, 10, 0, Math.PI * 2);
-    ctx.fillStyle = cluster.color + (isLight ? '1A' : '22');
-    ctx.fill();
-    ctx.strokeStyle = cluster.color;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    
-    // Draw Model Identity Text Badges
-    ctx.fillStyle = labelColor;
-    ctx.font = "9px system-ui";
-    ctx.textAlign = "center";
-    ctx.fillText(cluster.label, cluster.x, cluster.y - 14);
-  });
-
-  // 1. Draw Sequential Chronological Sequential Roadmap Lines (Bottom up)
-  if (nodes.length > 1) {
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([3, 3]); // Tech drafting style layout dashed lines
-    
-    // Loop chronologically backwards to connect historical sequences
-    for (let i = nodes.length - 1; i > 0; i--) {
-      const currNode = nodes[i];
-      const nextNode = nodes[i - 1];
-      
-      // Calculate 3D rotations for alignment steps
-      const cosR = Math.cos(rotationAngle); const sinR = Math.sin(rotationAngle);
-      const currX = (currNode.baseX - 200) * cosR - (currNode.baseZ) * sinR + 200;
-      const nextX = (nextNode.baseX - 200) * cosR - (nextNode.baseZ) * sinR + 200;
-
-      // Color route paths based on historical correctness
-      ctx.beginPath();
-      ctx.moveTo(currX, currNode.baseY);
-      ctx.lineTo(nextX, nextNode.baseY);
-      
-      if (currNode.entry.was_correct === true && nextNode.entry.was_correct === true) {
-        ctx.strokeStyle = isLight ? 'rgba(16, 185, 129, 0.4)' : 'rgba(16, 185, 129, 0.3)';
-      } else {
-        ctx.strokeStyle = isLight ? 'rgba(99, 102, 241, 0.15)' : 'rgba(156, 163, 175, 0.1)';
-      }
-      ctx.stroke();
-    }
-    ctx.setLineDash([]); // Reset line engine rules
-  }
-
-  // 2. Render Component Node Synapse Points
-  nodes.forEach(node => {
-    const cosR = Math.cos(rotationAngle);
-    const sinR = Math.sin(rotationAngle);
-    node.x = (node.baseX - 200) * cosR - (node.baseZ) * sinR + 200;
-    node.y = node.baseY;
-
-    // Dim nodes if they fail to match current search parameters
-    if (!node.isMatched) {
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-      ctx.fillStyle = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)';
-      ctx.fill();
-      return;
-    }
-
-    // Connect node cleanly to parent hub center lines
-    const parent = modelClusters[node.entry.model] || modelClusters['manual-entry'];
-    ctx.beginPath();
-    ctx.moveTo(parent.x, parent.y);
-    ctx.lineTo(node.x, node.y);
-    ctx.strokeStyle = node.color + (isLight ? '15' : '11');
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Render primary interactive node orb
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-    ctx.fillStyle = node.color;
-    
-    if(!isLight) {
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = node.color;
-    }
-    ctx.fill();
-    ctx.shadowBlur = 0; // Clear canvas glow layer safely
-  });
-
-  requestAnimationFrame(renderMatrixSpace);
-}
-
-// Spatial Vector Box Collision Mouse Clicking Setup
-canvas.addEventListener('click', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  const clickY = e.clientY - rect.top;
-
-  const nodes = mapLedgerToNodes(ledgerData);
-  let clickedNode = null;
-
-  nodes.forEach(node => {
-    if (!node.isMatched) return;
-    const dist = Math.hypot(node.x - clickX, node.y - clickY);
-    if (dist < node.radius + 5) clickedNode = node;
-  });
-
-  if (clickedNode) {
-    activeNode = clickedNode;
-    showInspectionPanel(clickedNode.entry);
-  }
-});
-
-function showInspectionPanel(entry) {
-  document.getElementById('panel-model-badge').innerText = entry.model;
-  document.getElementById('panel-model-badge').style.background = (modelClusters[entry.model] || modelClusters['manual-entry']).color;
-  document.getElementById('panel-prompt').innerText = entry.prompt;
-  document.getElementById('panel-response').innerText = entry.response;
-  
-  document.getElementById('inspection-panel').classList.remove('hidden');
-  document.getElementById('audit-actions').classList.remove('hidden');
-}
-
-document.getElementById('close-panel-btn').addEventListener('click', () => {
-  document.getElementById('inspection-panel').classList.add('hidden');
-});
-
-async function auditInteraction(isCorrect) {
-  if (!activeNode) return;
-  ledgerData = ledgerData.map(entry => {
-    if (entry.id === activeNode.id) return { ...entry, was_correct: isCorrect };
-    return entry;
-  });
-  await StorageSync.saveLedger(ledgerData);
-  updateStatsBanner();
-  document.getElementById('inspection-panel').classList.add('hidden');
-}
-
-document.getElementById('btn-correct').addEventListener('click', () => auditInteraction(true));
-document.getElementById('btn-hallucinated').addEventListener('click', () => auditInteraction(false));
-
-// Live Filtering Logic Handler
-const searchInput = document.getElementById('matrix-search');
-const searchCount = document.getElementById('search-count');
-
-searchInput.addEventListener('input', (e) => {
-  searchQuery = e.target.value.toLowerCase().trim();
-  if (searchQuery === "") {
-    searchCount.classList.add('hidden');
-  } else {
-    const matches = ledgerData.filter(entry => {
-      return `${entry.prompt} ${entry.response}`.toLowerCase().includes(searchQuery);
-    }).length;
-    searchCount.innerText = `${matches} found`;
-    searchCount.classList.remove('hidden');
-  }
-});
-
-// Interactive Theme Switcher Controller
-const themeToggleBtn = document.getElementById('theme-toggle-btn');
-themeToggleBtn.addEventListener('click', () => {
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', nextTheme);
-});
-
-// Global Keyboard Shortcut Listener for Quick Filters (Ctrl + F Focus)
-window.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-    e.preventDefault();
-    searchInput.focus();
-  }
-});
-
-function updateStatsBanner() {
-  const verified = ledgerData.filter(e => e.was_correct !== null).length;
-  const accuracy = ledgerData.filter(e => e.was_correct === true).length;
-  document.getElementById('stats-banner').innerText = `${ledgerData.length} Logs • ${verified} Audited • Accuracy: ${verified ? Math.round((accuracy/verified)*100) : 0}%`;
-}
-
+// Background cross-layer broadcast sync triggers
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.type === "NEW_AI_INTERACTION") {
       StorageSync.loadLedger().then(data => {
-        ledgerData = data;
-        updateStatsBanner();
+        globalLedger = data;
+        updateModelOfYouTab();
+        updateTrustScoresTab();
       });
     }
   });
 }
 
+// Application Initialization Entry Point
 document.addEventListener("DOMContentLoaded", async () => {
-  ledgerData = await StorageSync.loadLedger();
+  globalLedger = await StorageSync.loadLedger();
+  console.log("Trust Ledger Tab Matrix Activated.");
+});
